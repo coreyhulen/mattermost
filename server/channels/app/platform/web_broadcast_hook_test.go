@@ -25,6 +25,7 @@ func (h *testBroadcastHook) Process(msg *HookedWebSocketEvent, webConn *WebConn,
 }
 
 func TestRunBroadcastHooks(t *testing.T) {
+	mainHelper.Parallel(t)
 	hub := &Hub{
 		broadcastHooks: map[string]BroadcastHook{
 			broadcastTest: &testBroadcastHook{},
@@ -72,7 +73,7 @@ func TestRunBroadcastHooks(t *testing.T) {
 		result := hub.runBroadcastHooks(event, webConn, hookIDs, hookArgs)
 
 		assert.NotSame(t, event, result)
-		assert.NotSame(t, event.GetData(), result.GetData())
+		assert.NotSame(t, model.NewPointer(event.GetData()), model.NewPointer(result.GetData()))
 		assert.Equal(t, map[string]any{}, event.GetData())
 		assert.Equal(t, result.GetData(), map[string]any{
 			"changes_made": 1,
@@ -119,7 +120,7 @@ func TestRunBroadcastHooks(t *testing.T) {
 		result := hub.runBroadcastHooks(event, webConn, hookIDs, hookArgs)
 
 		assert.NotSame(t, event, result)
-		assert.NotSame(t, event.GetData(), result.GetData())
+		assert.NotSame(t, model.NewPointer(event.GetData()), model.NewPointer(result.GetData()))
 		assert.Equal(t, event.GetData(), map[string]any{})
 		assert.Equal(t, result.GetData(), map[string]any{
 			"changes_made": 1,
@@ -141,7 +142,7 @@ func TestRunBroadcastHooks(t *testing.T) {
 		result := hub.runBroadcastHooks(event, webConn, hookIDs, hookArgs)
 
 		assert.NotSame(t, event, result)
-		assert.NotSame(t, event.GetData(), result.GetData())
+		assert.NotSame(t, model.NewPointer(event.GetData()), model.NewPointer(result.GetData()))
 		assert.Equal(t, event.GetData(), map[string]any{})
 		assert.Equal(t, result.GetData(), map[string]any{
 			"changes_made": 10,

@@ -126,6 +126,7 @@ type Routes struct {
 	Cloud *mux.Router // 'api/v4/cloud'
 
 	Imports *mux.Router // 'api/v4/imports'
+	Import  *mux.Router // 'api/v4/imports/{import_name:.+\\.zip}'
 
 	Exports *mux.Router // 'api/v4/exports'
 	Export  *mux.Router // 'api/v4/exports/{export_name:.+\\.zip}'
@@ -151,6 +152,16 @@ type Routes struct {
 
 	OutgoingOAuthConnections *mux.Router // 'api/v4/oauth/outgoing_connections'
 	OutgoingOAuthConnection  *mux.Router // 'api/v4/oauth/outgoing_connections/{outgoing_oauth_connection_id:[A-Za-z0-9]+}'
+
+	CustomProfileAttributes       *mux.Router // 'api/v4/custom_profile_attributes'
+	CustomProfileAttributesFields *mux.Router // 'api/v4/custom_profile_attributes/fields'
+	CustomProfileAttributesField  *mux.Router // 'api/v4/custom_profile_attributes/fields/{field_id:[A-Za-z0-9]+}'
+	CustomProfileAttributesValues *mux.Router // 'api/v4/custom_profile_attributes/values'
+
+	AuditLogs *mux.Router // 'api/v4/audit_logs'
+
+	AccessControlPolicies *mux.Router // 'api/v4/access_control_policies'
+	AccessControlPolicy   *mux.Router // 'api/v4/access_control_policies/{policy_id:[A-Za-z0-9]+}'
 }
 
 type API struct {
@@ -263,6 +274,7 @@ func Init(srv *app.Server) (*API, error) {
 	api.BaseRoutes.Cloud = api.BaseRoutes.APIRoot.PathPrefix("/cloud").Subrouter()
 
 	api.BaseRoutes.Imports = api.BaseRoutes.APIRoot.PathPrefix("/imports").Subrouter()
+	api.BaseRoutes.Import = api.BaseRoutes.Imports.PathPrefix("/{import_name:.+\\.zip}").Subrouter()
 	api.BaseRoutes.Exports = api.BaseRoutes.APIRoot.PathPrefix("/exports").Subrouter()
 	api.BaseRoutes.Export = api.BaseRoutes.Exports.PathPrefix("/{export_name:.+\\.zip}").Subrouter()
 
@@ -287,6 +299,16 @@ func Init(srv *app.Server) (*API, error) {
 
 	api.BaseRoutes.OutgoingOAuthConnections = api.BaseRoutes.APIRoot.PathPrefix("/oauth/outgoing_connections").Subrouter()
 	api.BaseRoutes.OutgoingOAuthConnection = api.BaseRoutes.OutgoingOAuthConnections.PathPrefix("/{outgoing_oauth_connection_id:[A-Za-z0-9]+}").Subrouter()
+
+	api.BaseRoutes.CustomProfileAttributes = api.BaseRoutes.APIRoot.PathPrefix("/custom_profile_attributes").Subrouter()
+	api.BaseRoutes.CustomProfileAttributesFields = api.BaseRoutes.CustomProfileAttributes.PathPrefix("/fields").Subrouter()
+	api.BaseRoutes.CustomProfileAttributesField = api.BaseRoutes.CustomProfileAttributesFields.PathPrefix("/{field_id:[A-Za-z0-9]+}").Subrouter()
+	api.BaseRoutes.CustomProfileAttributesValues = api.BaseRoutes.CustomProfileAttributes.PathPrefix("/values").Subrouter()
+
+	api.BaseRoutes.AuditLogs = api.BaseRoutes.APIRoot.PathPrefix("/audit_logs").Subrouter()
+
+	api.BaseRoutes.AccessControlPolicies = api.BaseRoutes.APIRoot.PathPrefix("/access_control_policies").Subrouter()
+	api.BaseRoutes.AccessControlPolicy = api.BaseRoutes.APIRoot.PathPrefix("/access_control_policies/{policy_id:[A-Za-z0-9]+}").Subrouter()
 
 	api.InitUser()
 	api.InitBot()
@@ -338,6 +360,9 @@ func Init(srv *app.Server) (*API, error) {
 	api.InitOutgoingOAuthConnection()
 	api.InitClientPerformanceMetrics()
 	api.InitScheduledPost()
+	api.InitCustomProfileAttributes()
+	api.InitAuditLogging()
+	api.InitAccessControlPolicy()
 
 	// If we allow testing then listen for manual testing URL hits
 	if *srv.Config().ServiceSettings.EnableTesting {
@@ -413,12 +438,21 @@ func InitLocal(srv *app.Server) *API {
 	api.BaseRoutes.Upload = api.BaseRoutes.Uploads.PathPrefix("/{upload_id:[A-Za-z0-9]+}").Subrouter()
 
 	api.BaseRoutes.Imports = api.BaseRoutes.APIRoot.PathPrefix("/imports").Subrouter()
+	api.BaseRoutes.Import = api.BaseRoutes.Imports.PathPrefix("/{import_name:.+\\.zip}").Subrouter()
 	api.BaseRoutes.Exports = api.BaseRoutes.APIRoot.PathPrefix("/exports").Subrouter()
 	api.BaseRoutes.Export = api.BaseRoutes.Exports.PathPrefix("/{export_name:.+\\.zip}").Subrouter()
 
 	api.BaseRoutes.Jobs = api.BaseRoutes.APIRoot.PathPrefix("/jobs").Subrouter()
 
 	api.BaseRoutes.SAML = api.BaseRoutes.APIRoot.PathPrefix("/saml").Subrouter()
+
+	api.BaseRoutes.CustomProfileAttributes = api.BaseRoutes.APIRoot.PathPrefix("/custom_profile_attributes").Subrouter()
+	api.BaseRoutes.CustomProfileAttributesFields = api.BaseRoutes.CustomProfileAttributes.PathPrefix("/fields").Subrouter()
+	api.BaseRoutes.CustomProfileAttributesField = api.BaseRoutes.CustomProfileAttributesFields.PathPrefix("/{field_id:[A-Za-z0-9]+}").Subrouter()
+	api.BaseRoutes.CustomProfileAttributesValues = api.BaseRoutes.CustomProfileAttributes.PathPrefix("/values").Subrouter()
+
+	api.BaseRoutes.AccessControlPolicies = api.BaseRoutes.APIRoot.PathPrefix("/access_control_policies").Subrouter()
+	api.BaseRoutes.AccessControlPolicy = api.BaseRoutes.APIRoot.PathPrefix("/access_control_policies/{policy_id:[A-Za-z0-9]+}").Subrouter()
 
 	api.InitUserLocal()
 	api.InitTeamLocal()
@@ -440,6 +474,8 @@ func InitLocal(srv *app.Server) *API {
 	api.InitExportLocal()
 	api.InitJobLocal()
 	api.InitSamlLocal()
+	api.InitCustomProfileAttributesLocal()
+	api.InitAccessControlPolicyLocal()
 
 	srv.LocalRouter.Handle("/api/v4/{anything:.*}", http.HandlerFunc(api.Handle404))
 

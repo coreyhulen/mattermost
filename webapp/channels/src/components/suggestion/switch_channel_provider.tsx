@@ -121,9 +121,10 @@ type Props = SuggestionProps<WrappedChannel> & WrappedComponentProps & {
     isPartOfOnlyOneTeam: boolean;
     status?: string;
     team?: Team;
+    id: string;
 }
 
-const SwitchChannelSuggestion = React.forwardRef<HTMLDivElement, Props>((props, ref) => {
+const SwitchChannelSuggestion = React.forwardRef<HTMLLIElement, Props>((props, ref) => {
     const {item, status, collapsedThreads, team, isPartOfOnlyOneTeam} = props;
     const channel = item.channel;
     const channelIsArchived = channel.delete_at && channel.delete_at !== 0;
@@ -258,15 +259,17 @@ const SwitchChannelSuggestion = React.forwardRef<HTMLDivElement, Props>((props, 
     return (
         <SuggestionContainer
             ref={ref}
-            id={`switchChannel_${channel.name}`}
             data-testid={channel.name}
-            role='listitem'
+            aria-labelledby={`${name.toLowerCase().replaceAll(' ', '-')}-item-name`}
             {...props}
         >
             {icon}
             <div className='suggestion-list__ellipsis suggestion-list__flex'>
                 <span className='suggestion-list__main'>
-                    <span className={classNames({'suggestion-list__unread': item.unread && !channelIsArchived})}>{name}</span>
+                    <span
+                        className={classNames({'suggestion-list__unread': item.unread && !channelIsArchived})}
+                        id={`${name.toLowerCase().replaceAll(' ', '-')}-item-name`}
+                    >{name}</span>
                     {showSlug && description && <span className='ml-2 suggestion-list__desc'>{description}</span>}
                 </span>
                 {customStatus}
@@ -319,7 +322,7 @@ function mapStateToPropsForSwitchChannelSuggestion(state: GlobalState, ownProps:
     };
 }
 
-const ConnectedSwitchChannelSuggestion = connect(mapStateToPropsForSwitchChannelSuggestion, null, null, {forwardRef: true})(injectIntl(SwitchChannelSuggestion));
+const ConnectedSwitchChannelSuggestion = connect(mapStateToPropsForSwitchChannelSuggestion, null, null, {forwardRef: true})(injectIntl(SwitchChannelSuggestion, {forwardRef: true}));
 
 let prefix = '';
 

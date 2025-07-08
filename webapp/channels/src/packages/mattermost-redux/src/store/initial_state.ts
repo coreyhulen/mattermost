@@ -13,6 +13,8 @@ const state: GlobalState = {
             serverVersion: '',
             firstAdminVisitMarketplaceStatus: false,
             firstAdminCompleteSetup: false,
+            customProfileAttributes: {},
+            cwsAvailability: 'pending',
         },
         users: {
             currentUserId: '',
@@ -118,6 +120,8 @@ const state: GlobalState = {
             dataRetentionCustomPolicies: {},
             dataRetentionCustomPoliciesCount: 0,
             prevTrialLicense: {},
+            accessControlPolicies: {},
+            channelsForAccessControlPolicy: {},
         },
         jobs: {
             jobs: {},
@@ -132,6 +136,7 @@ const state: GlobalState = {
             commands: {},
             appsBotIDs: [],
             appsOAuthAppIDs: [],
+            dialogTriggerId: '',
             outgoingOAuthConnections: {},
         },
         files: {

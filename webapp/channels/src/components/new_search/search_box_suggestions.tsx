@@ -2,6 +2,7 @@
 // See LICENSE.txt for license information.
 
 import React, {useCallback} from 'react';
+import {FormattedMessage} from 'react-intl';
 import {useSelector} from 'react-redux';
 import styled from 'styled-components';
 
@@ -14,7 +15,7 @@ import type {SuggestionProps} from 'components/suggestion/suggestion';
 
 import ErrorBoundary from 'plugins/pluggable/error_boundary';
 
-const SuggestionsHeader = styled.div`
+const SuggestionsHeader = styled.h2`
     margin-top: 16px;
     padding: 8px 24px;
     color: rgba(var(--center-channel-color-rgb), 0.56);
@@ -22,6 +23,11 @@ const SuggestionsHeader = styled.div`
     line-height: 16px;
     font-weight: 600;
     text-transform: uppercase;
+    margin-bottom: 0;
+
+    && {
+        font-family: 'Open Sans', sans-serif;
+    }
 `;
 
 const SuggestionsBody = styled.div`
@@ -31,19 +37,20 @@ const SuggestionsBody = styled.div`
 
 type Props = {
     searchType: string;
+    searchTeam: string;
     searchTerms: string;
     selectedOption: number;
     setSelectedOption: (idx: number) => void;
     suggestionsHeader: React.ReactNode;
     providerResults: ProviderResult<unknown> | null;
-    onSearch: (searchType: string, searchTerms: string) => void;
+    onSearch: (searchType: string, searchTeam: string, searchTerms: string) => void;
     onSuggestionSelected: (value: string, matchedPretext: string) => void;
 }
 
-const SearchSuggestions = ({searchType, searchTerms, suggestionsHeader, providerResults, selectedOption, setSelectedOption, onSearch, onSuggestionSelected}: Props) => {
+const SearchSuggestions = ({searchType, searchTeam, searchTerms, suggestionsHeader, providerResults, selectedOption, setSelectedOption, onSearch, onSuggestionSelected}: Props) => {
     const runSearch = useCallback((searchTerms: string) => {
-        onSearch(searchType, searchTerms);
-    }, [onSearch, searchType]);
+        onSearch(searchType, searchTeam, searchTerms);
+    }, [onSearch, searchTeam, searchType]);
 
     const searchPluginSuggestions = useSelector(getSearchPluginSuggestions);
 
@@ -87,7 +94,15 @@ const SearchSuggestions = ({searchType, searchTerms, suggestionsHeader, provider
                         className='sr-only'
                         key={providerResults.terms[selectedOption]}
                     >
-                        {generateLabel(providerResults.items[selectedOption])}
+                        <FormattedMessage
+                            id='search_box_suggestions.suggestions_readout'
+                            defaultMessage='{label} ({idx} of {total} results available)'
+                            values={{
+                                label: generateLabel(providerResults.items[selectedOption]),
+                                idx: selectedOption + 1,
+                                total: providerResults.items.length,
+                            }}
+                        />
                     </div>
                 )}
                 {providerResults.items.map((item, idx) => {
@@ -113,7 +128,7 @@ const SearchSuggestions = ({searchType, searchTerms, suggestionsHeader, provider
         );
     }
 
-    const pluginComponentInfo = searchPluginSuggestions.find(({pluginId}: any) => {
+    const pluginComponentInfo = searchPluginSuggestions.find(({pluginId}) => {
         if (searchType === pluginId) {
             return true;
         }
@@ -124,7 +139,7 @@ const SearchSuggestions = ({searchType, searchTerms, suggestionsHeader, provider
         return null;
     }
 
-    const Component: any = pluginComponentInfo.component;
+    const Component = pluginComponentInfo.component;
 
     return (
         <ErrorBoundary>
